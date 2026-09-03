@@ -1,0 +1,14 @@
+# Model weights and datasets
+model.pth
+data/
+*.pt
+*.pth
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Env / secrets
+.env
