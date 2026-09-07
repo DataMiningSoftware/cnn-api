@@ -6,6 +6,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
+from flowers import FLOWER_CLASSES
+
 
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune MobileNetV2 on an image dataset.")
@@ -13,6 +15,8 @@ def main():
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--unfreeze", action="store_true",
+                        help="Fine-tune the feature extractor too (slower, higher accuracy).")
     parser.add_argument("--out", default="model.pth")
     args = parser.parse_args()
 
@@ -33,7 +37,7 @@ def main():
     else:
         Path("./data").mkdir(exist_ok=True)
         dataset = datasets.Flowers102(root="./data", split="train", download=True, transform=transform)
-        classes = [str(i) for i in range(102)]
+        classes = FLOWER_CLASSES
 
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     print(f"Classes: {len(classes)}")
@@ -43,7 +47,17 @@ def main():
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.classifier.parameters(), lr=args.lr)
+    if args.unfreeze:
+        for p in model.features.parameters():
+            p.requires_grad = True
+        optimizer = torch.optim.Adam(
+            [
+                {"params": model.features.parameters(), "lr": args.lr * 0.1},
+                {"params": model.classifier.parameters(), "lr": args.lr},
+            ]
+        )
+    else:
+        optimizer = torch.optim.Adam(model.classifier.parameters(), lr=args.lr)
 
     model.train()
     for epoch in range(args.epochs):
