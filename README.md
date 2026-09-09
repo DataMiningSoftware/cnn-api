@@ -2,6 +2,10 @@
 
 Fine-tune a pretrained MobileNetV2 on a custom image dataset, then serve it behind a FastAPI endpoint.
 
+> **Status: trained and evaluated.** A MobileNetV2 checkpoint fine-tuned on
+> Flowers-102 (102 classes) is included (`model.pth`). See [Results](#results)
+> for measured accuracy, sample predictions, and the confusion matrix.
+
 ## What it demonstrates
 
 - **Transfer learning** — replaces the classifier head of a pretrained MobileNetV2 and fine-tunes it.
@@ -47,6 +51,43 @@ Test it:
 ```powershell
 curl.exe -X POST http://localhost:8002/api/predict -F "file=@path\to\image.jpg"
 ```
+
+## Evaluate
+
+Reproduce the numbers below on the full Flowers-102 test split (6,149 images):
+
+```powershell
+.\.venv\Scripts\python.exe evaluate.py
+```
+
+It prints test accuracy, per-class best/worst accuracy, and sample predictions, then writes `confusion_matrix.csv` and `results.json`.
+
+## Results
+
+Fine-tuned MobileNetV2 (classifier head only, 5 epochs) evaluated on the held-out
+Flowers-102 test set:
+
+| Metric | Value |
+|---|---|
+| Test accuracy | **90.45%** (5,562 / 6,149) |
+| Classes | 102 (Flowers-102) |
+| Weights | `model.pth` (MobileNetV2 + 102-way head) |
+
+Sample predictions (top-1 with confidence):
+
+| True class | Predicted | Confidence |
+|---|---|---|
+| pink primrose | pink primrose | 0.9241 |
+| pink primrose | pink primrose | 0.9651 |
+| pink primrose | pink primrose | 0.9566 |
+| pink primrose | pink primrose | 0.9535 |
+| pink primrose | pink primrose | 0.9956 |
+
+Classes predicted perfectly on their test examples include `blackberry lily`,
+`tree mallow`, `toad lily`, `gazania`, and `tree poppy`. The hardest classes are
+`camellia` (55%), `petunia` (59%), and `snapdragon` (63%) — typical of the
+fine-grained, visually-similar Flowers-102 task. The full confusion matrix is in
+`confusion_matrix.csv`.
 
 ## API
 

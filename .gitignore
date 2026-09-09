@@ -4,6 +4,10 @@ data/
 *.pt
 *.pth
 
+# Evaluation artifacts
+results.json
+confusion_matrix.csv
+
 # Python
 __pycache__/
 *.py[cod]
